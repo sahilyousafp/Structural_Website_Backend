@@ -1,7 +1,7 @@
-Flask==2.3.2
+Flask
 rhino3dm
 numpy
 shapely
 pyvista
-supabase-py
+supabase
 gunicorn
