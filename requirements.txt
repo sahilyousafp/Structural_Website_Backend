@@ -1,0 +1,5 @@
+rhino3dm
+numpy
+shapely
+matplotlib
+pyvista
