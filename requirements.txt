@@ -1,5 +1,7 @@
+Flask==2.3.2
 rhino3dm
 numpy
 shapely
-matplotlib
 pyvista
+supabase-py
+gunicorn
