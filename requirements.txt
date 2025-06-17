@@ -1,7 +1,2 @@
-Flask==2.3.2
-rhino3dm
-numpy
-shapely
-pyvista
-supabase-py
+Flask
 gunicorn
