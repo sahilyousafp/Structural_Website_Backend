@@ -1,11 +1,9 @@
 Flask
-<<<<<<< HEAD
 gunicorn
-=======
 rhino3dm
 numpy
 shapely
 pyvista
 supabase
 gunicorn
->>>>>>> 9a3abb9d99686c87c0bc3407a3e10438ef1e3f7e
+
