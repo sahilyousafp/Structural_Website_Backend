@@ -1,9 +1,6 @@
-Flask
 gunicorn
+supabase
 rhino3dm
+flask
 numpy
 shapely
-pyvista
-supabase
-gunicorn
-
