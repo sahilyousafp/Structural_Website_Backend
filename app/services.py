@@ -88,7 +88,7 @@ class GridGenerator:
 
 def generate_structure(rhino_path, num_floors):
     loader = RhinoLoader(rhino_path)
-    grid = GridGenerator(loader.building_volumes, loader.imported_columns, loader.wall_breps, loader.max_z, num_floors)
+    grid = GridGenerator(loader.building_volumes, loader.imported_columns, loader.wall_breps, loader.max_z, num_floors = 2)
     return {
         "columns": [[float(x), float(y)] for x, y in grid.all_base],
         "beams": [
