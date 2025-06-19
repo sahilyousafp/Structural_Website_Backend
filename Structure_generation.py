@@ -1,19 +1,19 @@
-from flask import Flask, jsonify, request
-import json
-import os
-from io import BytesIO
-import trimesh
-from shapely.geometry import Polygon, Point
+# Structure generation module: defines StructuralSystem class for computing structural system JSON
 import numpy as np
-from supabase import create_client  # added import for supabase client
+from shapely.geometry import Polygon, Point
 
-# Structural computation encapsulated in a class
 class StructuralSystem:
     def __init__(self, meshes):
+        """
+        Initialize with a list of trimesh mesh objects.
+        """
         self.meshes = meshes
         self.building_polys, self.wall_data, self.global_max_z = self.extract_wall_data()
 
     def extract_wall_data(self):
+        """
+        Extract wall polygon footprints and heights from mesh bounding boxes.
+        """
         wall_data = []
         building_polys = []
         max_z = 0.0
@@ -28,6 +28,9 @@ class StructuralSystem:
         return building_polys, wall_data, max_z
 
     def get_wall_height(self, x, y):
+        """
+        Get height at a point based on closest wall footprint.
+        """
         pt = Point(x, y)
         closest = None
         dist0 = float('inf')
@@ -39,6 +42,10 @@ class StructuralSystem:
         return closest['max_z'] if closest else self.global_max_z
 
     def compute(self, num_floors):
+        """
+        Compute column and beam layout for given number of floors.
+        Returns a dictionary with 'num_floors', 'columns', and 'beams'.
+        """
         MaxS, MinS = 6.0, 3.0
         generated = []
         beams_2d = []
@@ -46,9 +53,8 @@ class StructuralSystem:
         rooms = sorted([(poly, poly.area) for poly in self.building_polys], key=lambda x: -x[1])
         for poly, _ in rooms:
             minx, miny, maxx, maxy = poly.bounds
-            dx, dy = maxx - minx, maxy - miny
-            nx = int(np.ceil(dx / MaxS))
-            ny = int(np.ceil(dy / MaxS))
+            nx = int(np.ceil((maxx - minx) / MaxS))
+            ny = int(np.ceil((maxy - miny) / MaxS))
             xs = np.linspace(minx, maxx, nx + 1)
             ys = np.linspace(miny, maxy, ny + 1)
             # grid columns
@@ -80,38 +86,3 @@ class StructuralSystem:
                     continue
                 result['beams'].append({'start': [x1, y1, z], 'end': [x2, y2, z], 'floor': floor})
         return result
-
-app = Flask(__name__)
-
-# Supabase configuration
-SUPABASE_URL = 'https://apdbfbjnlsxjfubqahtl.supabase.co'
-SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFwZGJmYmpubHN4amZ1YnFhaHRsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc0NzY1MzgsImV4cCI6MjA2MzA1MjUzOH0.DPINyYHHUzcuQ6AOcp8hh1W1eIiamOFPKFRMNfHypSU'
-sb = create_client(SUPABASE_URL, SUPABASE_KEY)
-
-# Flask endpoint: load latest model, compute structure, return JSON
-@app.route('/')
-def root():
-    num_floors = int(request.args.get('floors', 1))
-    try:
-        # list and download latest .glb/.obj in storage folder
-        files = sb.storage.from_('models').list('79edaed4-a719-4390-a485-519b68fa68ea/')
-        # filter valid model files
-        model_files = [f['name'] for f in files if f['name'].lower().endswith(('.glb', '.obj'))]
-        if not model_files:
-            raise RuntimeError('No .glb or .obj files in Supabase storage')
-        latest_name = model_files[-1]
-        full_path = f"79edaed4-a719-4390-a485-519b68fa68ea/{latest_name}"
-        data_bytes = sb.storage.from_('models').download(full_path)
-        # load mesh (OBJ or GLB)
-        ext = latest_name.split('.')[-1].lower()
-        scene = trimesh.load(BytesIO(data_bytes), file_type=ext, force='scene')
-        meshes = list(scene.geometry.values()) if scene.geometry else []
-        # compute structure JSON
-        system = StructuralSystem(meshes)
-        result = system.compute(num_floors)
-        return jsonify(result)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-if __name__ == '__main__':
-    app.run(debug=False, host='0.0.0.0', port=5000)
