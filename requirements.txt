@@ -4,3 +4,4 @@ rhino3dm
 flask
 numpy
 shapely
+trimesh
