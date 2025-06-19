@@ -89,11 +89,13 @@ def compute_structure(meshes, num_floors):
 def root():
     num_floors = int(request.args.get('floors', 1))
     try:
-        # list and download latest file in storage folder
+        # list and download latest .glb/.obj in storage folder
         files = sb.storage.from_('models').list('79edaed4-a719-4390-a485-519b68fa68ea/')
-        if not files:
-            raise RuntimeError('No files in Supabase storage')
-        latest_name = files[-1]['name']
+        # filter valid model files
+        model_files = [f['name'] for f in files if f['name'].lower().endswith(('.glb', '.obj'))]
+        if not model_files:
+            raise RuntimeError('No .glb or .obj files in Supabase storage')
+        latest_name = model_files[-1]
         full_path = f"79edaed4-a719-4390-a485-519b68fa68ea/{latest_name}"
         data_bytes = sb.storage.from_('models').download(full_path)
         # load mesh (OBJ or GLB)
