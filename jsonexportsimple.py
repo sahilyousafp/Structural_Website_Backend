@@ -663,6 +663,11 @@ def get_wall_height(x, y, mesh_bboxes, global_max_z):
 # --- DATA GENERATION AND COMBINED JSON EXPORT ---
 print("--- Generating data and creating combined JSON ---")
 
+EXPORT_SAVE_PATH = os.path.join(os.getcwd(), "structural_data") # Use current working directory
+
+os.makedirs(EXPORT_SAVE_PATH, exist_ok=True)
+print(f"Ensuring directory exists: {os.path.abspath(EXPORT_SAVE_PATH)}")
+
 node_coords = []
 node_dict = OrderedDict()
 
@@ -1003,6 +1008,12 @@ from collections import OrderedDict # Re-import for OrderedDict if not already g
 # base_github_path = r"C:\Users\papad\Documents\GitHub\Octopusie"
 import os
 
+script_dir = os.path.dirname(os.path.abspath(__file__))
+base_github_path = os.path.abspath(os.path.join(script_dir, ".."))
+
+CSV_SAVE_PATH = os.path.join(base_github_path, "eleftheriaexperiment", "structural_data")
+os.makedirs(CSV_SAVE_PATH, exist_ok=True)  # <— ensure it exists!
+
 print(f"Using in-memory structural data from previous processing")
 print(f"Using in-memory 3DM model for analysis")
 
@@ -1245,24 +1256,6 @@ combined_json_data = json.dumps(combined_structural_data, indent=4)
 try:
     # Upload the combined JSON to the "analysis-results" bucket
     json_filename = f"{file_name_without_ext}_structural_data.json"
-    
-    # First, try to remove existing file if it exists (to replace it)
-    try:
-        existing_files = supabase.storage.from_("analysis-results").list()
-        file_exists = any(file.get('name') == json_filename for file in existing_files)
-        
-        if file_exists:
-            print(f"🔄 File '{json_filename}' already exists. Removing old version...")
-            remove_response = supabase.storage.from_("analysis-results").remove([json_filename])
-            if remove_response:
-                print(f"✅ Old file removed successfully")
-            else:
-                print(f"⚠️ Warning: Could not remove old file, proceeding with upload...")
-    except Exception as remove_error:
-        print(f"⚠️ Warning: Error checking/removing existing file: {remove_error}")
-        print("Proceeding with upload anyway...")
-    
-    # Upload the new file
     upload_response = supabase.storage.from_("analysis-results").upload(
         json_filename, 
         combined_json_data.encode('utf-8'),
@@ -1280,6 +1273,11 @@ try:
         
 except Exception as e:
     print(f"❌ Error uploading to Supabase: {e}")
+    # Fallback: save locally
+    local_json_path = os.path.join(CSV_SAVE_PATH, json_filename)
+    with open(local_json_path, 'w') as f:
+        f.write(combined_json_data)
+    print(f"💾 Saved combined structural data locally as fallback: {local_json_path}")
 
 print("\n🎉 Processing complete!")
 
