@@ -5,16 +5,26 @@ import sys
 
 app = Flask(__name__)
 
+def run_background_script():
+    """Helper function to run the background script"""
+    try:
+        script_path = os.path.join(os.path.dirname(__file__), 'jsonexportsimplesupabasetake3')
+        subprocess.Popen([sys.executable, script_path])
+        return True
+    except Exception as e:
+        print(f"Failed to start background script: {e}")
+        return False
+
+@app.route('/refresh')
+def refresh():
+    """Endpoint to refresh/rerun the background script"""
+    if run_background_script():
+        return "✅ Background script refreshed successfully!"
+    else:
+        return "❌ Failed to refresh background script", 500
+
 # Run the script in background when Flask app starts
-try:
-<<<<<<< HEAD
-    script_path = os.path.join(os.path.dirname(__file__), 'jsonexportsimplesupabasetake3.py')
-=======
-    script_path = os.path.join(os.path.dirname(__file__), 'jsonexportsimple.py')
->>>>>>> 44d443df4832f2bde504b6f3e8a4a6c64c89d8d7
-    subprocess.Popen([sys.executable, script_path])
-except Exception as e:
-    print(f"Failed to start background script: {e}")
+run_background_script()
 
 if __name__ == '__main__':
     try:
