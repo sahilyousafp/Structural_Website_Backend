@@ -8,7 +8,7 @@ app = Flask(__name__)
 def run_background_script():
     """Helper function to run the background script"""
     try:
-        script_path = os.path.join(os.path.dirname(__file__), 'jsonexportsimplesupabasetake3')
+        script_path = os.path.join(os.path.dirname(__file__), r'./jsonexportsimplesupabasetake3')
         subprocess.Popen([sys.executable, script_path])
         return True
     except Exception as e:
