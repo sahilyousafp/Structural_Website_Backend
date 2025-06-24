@@ -133,7 +133,9 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # Storage parameters
 bucket_name = "models"
-folder_path = "79edaed4-a719-4390-a485-519b68fa68ea"
+# Prompt the user for their email and use it as the Supabase folder path
+user_email = input("Enter the user email (this becomes the Supabase folder path): ").strip()
+folder_path = user_email
 
 # List all files in the folder
 files = supabase.storage.from_(bucket_name).list(folder_path)
@@ -188,7 +190,7 @@ all_mesh_bboxes = []
 roof_meshes_info = []
 max_z = 0.0
 
-Z_FLATNESS_TOLERANCE = 3
+Z_FLATNESS_TOLERANCE = 30
 
 for obj in model.Objects:
     geom = obj.Geometry
@@ -1259,7 +1261,7 @@ try:
     upload_response = supabase.storage.from_("analysis-results").upload(
         json_filename, 
         combined_json_data.encode('utf-8'),
-        {"content-type": "application/json"}
+        {"upsert": 'true'}  # Overwrite if exists
     )
     
     if upload_response:
